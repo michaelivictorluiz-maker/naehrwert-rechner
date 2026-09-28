@@ -253,7 +253,7 @@ $('plus').onclick=function(){if(pp<MAXP){pp++;update()}};
 $('tabFrei').onclick=function(){var t=$('toast');t.classList.add('show');sendHeight();clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('show');sendHeight()},4000)};
 
 // Altura automática para o iframe da página de vendas
-function sendHeight(){try{parent.postMessage({type:'naehrwert-demo-height',height:document.documentElement.scrollHeight},'*')}catch(e){}}
+function sendHeight(){try{var d=document.getElementById('demo');parent.postMessage({type:'naehrwert-demo-height',height:Math.ceil(d.getBoundingClientRect().height)+4},'*')}catch(e){}}
 if(window.ResizeObserver)new ResizeObserver(sendHeight).observe(document.body);
 window.addEventListener('load',sendHeight);
 
