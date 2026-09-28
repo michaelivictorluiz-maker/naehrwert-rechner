@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Nährwert-Rechner · Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Mesmo sistema visual da calculadora V10 (tema claro fixo para combinar com a página de vendas) */
+:root{
+  --bg:#F6F3EC; --bg-2:#EFEADF; --surface:#FFFFFF; --surface-2:#FAF8F3;
+  --border:#E4DED1; --border-2:#D6CEBD;
+  --text:#1C1B18; --text-2:#6E685E; --text-3:#9A9385;
+  --accent:#1F6B4A; --accent-lt:#E4F0E8; --accent-dk:#17543A; --on-accent:#FFFFFF;
+  --hero-1:#1F6B4A; --hero-2:#2F8A60;
+  --kcal-c:#D9642A; --prot-c:#1F8A5B; --fat-c:#7C5CE0; --carb-c:#D39512; --fib-c:#1487A8;
+  --shadow:0 1px 2px rgba(40,32,16,.05),0 6px 20px rgba(40,32,16,.06);
+  --radius:16px;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:transparent}
+body{color:var(--text);font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding:2px}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.serif{font-family:'Fraunces',Georgia,serif}
+
+.demo{max-width:980px;margin:0 auto;background:var(--bg);border:1px solid var(--border);border-radius:24px;padding:14px;box-shadow:var(--shadow)}
+
+/* Header */
+.app-header{position:relative;padding:20px 20px 18px;border-radius:18px;background:linear-gradient(135deg,var(--hero-1),var(--hero-2));color:#fff;overflow:hidden;margin-bottom:14px}
+.app-header::after{content:"";position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.07)}
+.app-header::before{content:"";position:absolute;right:50px;bottom:-90px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.05)}
+.hb{position:relative;z-index:1}
+.header-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.16);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px;margin-bottom:10px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#9BF0C4;box-shadow:0 0 0 0 rgba(155,240,196,.7);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(155,240,196,.6)}70%{box-shadow:0 0 0 7px rgba(155,240,196,0)}100%{box-shadow:0 0 0 0 rgba(155,240,196,0)}}
+.app-header h1{font-family:'Fraunces',Georgia,serif;font-size:clamp(1.5rem,5vw,2.1rem);font-weight:600;letter-spacing:-.02em;margin:0 0 4px;line-height:1.1}
+.app-header p{margin:0;color:rgba(255,255,255,.85);font-size:13.5px;max-width:520px}
+
+/* Tabs */
+.mode-tabs{display:flex;gap:4px;margin-bottom:14px;padding:4px;background:var(--bg-2);border:1px solid var(--border);border-radius:14px}
+.mode-tab{flex:1;padding:10px 8px;border:none;border-radius:10px;background:transparent;color:var(--text-2);font-size:13.5px;font-weight:600;cursor:pointer;text-align:center;min-height:44px}
+.mode-tab.active{background:var(--surface);color:var(--accent);box-shadow:var(--shadow);outline:1px solid var(--border-2)}
+.mode-tab.locked{color:var(--text-3)}
+.lock{display:inline-block;vertical-align:-2px;margin-left:4px}
+
+/* Layout */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;grid-template-areas:"list res" "ing res";gap:14px;align-items:start}
+.a-list{grid-area:list}.a-res{grid-area:res}.a-ing{grid-area:ing}
+@media(max-width:720px){.grid{grid-template-columns:1fr;grid-template-areas:"list" "res" "ing"}}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.panel-title{font-family:'Fraunces',Georgia,serif;font-size:1.05rem;font-weight:600;margin:0 0 12px;display:flex;align-items:center;gap:10px}
+.panel-title .ico{color:var(--accent);background:var(--accent-lt);width:28px;height:28px;border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+
+/* Recipe cards */
+.rezept-list{display:flex;flex-direction:column;gap:8px}
+.rezept-card{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--border);border-radius:14px;background:var(--surface-2);padding:12px 14px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s;color:inherit;min-height:56px}
+.rezept-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.rezept-card[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-lt);background:var(--surface)}
+.rnum{flex-shrink:0;min-width:36px;height:30px;border-radius:9px;background:var(--bg-2);color:var(--text-2);font-weight:700;font-size:13px;display:grid;place-items:center;font-variant-numeric:tabular-nums;transition:background .15s,color .15s}
+.rezept-card[aria-pressed="true"] .rnum{background:var(--accent);color:var(--on-accent)}
+.rbody{flex:1;min-width:0}
+.rname{font-family:'Fraunces',Georgia,serif;font-size:15px;font-weight:600;line-height:1.25}
+.rmeta{font-size:12px;color:var(--text-2);margin-top:2px}
+.rtag{flex-shrink:0;font-size:11.5px;background:var(--accent-lt);color:var(--accent);padding:4px 9px;border-radius:999px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+@media(max-width:380px){.rtag{display:none}}
+.more{display:flex;align-items:center;gap:10px;border:1.5px dashed var(--border-2);border-radius:14px;padding:11px 14px;color:var(--text-2);font-size:13px;font-weight:600}
+.more .rnum{background:transparent;border:1px dashed var(--border-2);color:var(--text-3)}
+
+/* Results */
+.rezept-badge{font-size:12px;background:var(--accent-lt);color:var(--accent);border-radius:10px;padding:8px 12px;text-align:center;margin-bottom:12px;font-weight:600;line-height:1.35}
+.portions{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;margin-bottom:12px}
+.portions .pl{font-size:13px;font-weight:600;line-height:1.3}
+.portions .ph{display:block;font-size:11.5px;color:var(--text-2);font-weight:400}
+.stepper{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.step{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--border-2);background:var(--surface);color:var(--accent);font-size:22px;font-weight:600;line-height:1;cursor:pointer;display:grid;place-items:center;transition:background .12s,transform .08s}
+.step:hover:not(:disabled){background:var(--accent-lt)}
+.step:active:not(:disabled){transform:scale(.95)}
+.step:disabled{opacity:.35;cursor:default}
+.pval{min-width:34px;text-align:center;font-family:'Fraunces',Georgia,serif;font-size:1.5rem;font-weight:600;font-variant-numeric:tabular-nums}
+.total-kcal{text-align:center;padding:16px 10px 14px;margin-bottom:12px;border-radius:14px;background:linear-gradient(180deg,#FBEBE1,var(--surface-2));border:1px solid var(--border)}
+.kcal-number{font-family:'Fraunces',Georgia,serif;font-size:3.2rem;font-weight:600;line-height:1;color:var(--kcal-c);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.kcal-label{font-size:11px;font-weight:700;color:var(--text-2);margin-top:8px;text-transform:uppercase;letter-spacing:.08em}
+.per-portion{font-size:12px;color:var(--text-3);margin-top:3px}
+.macro-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.macro-card{position:relative;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px 10px 10px 15px;overflow:hidden}
+.macro-card::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:4px;border-radius:0 4px 4px 0;background:currentColor}
+.macro-value{font-family:'Fraunces',Georgia,serif;font-size:1.5rem;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.macro-unit{font-size:13px;color:var(--text-2);margin-left:2px}
+.macro-name{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:6px;color:var(--text-2)}
+.m-prot{color:var(--prot-c)}.m-fat{color:var(--fat-c)}.m-carb{color:var(--carb-c)}.m-fib{color:var(--fib-c)}
+.energy-bar{height:12px;border-radius:999px;background:var(--bg-2);overflow:hidden;display:flex;gap:2px;margin-bottom:10px}
+.bar-seg{height:100%;transition:width .35s ease;border-radius:999px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2)}
+.legend-dot{width:9px;height:9px;border-radius:3px}
+
+/* Ingredients */
+.ing-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 12px;background:var(--surface-2);border-radius:10px;margin-bottom:6px;border:1px solid var(--border);font-size:13.5px}
+.ing-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.ing-qty{color:var(--text-2);font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap;background:var(--bg-2);padding:2px 8px;border-radius:999px}
+.ing-kcal{color:var(--kcal-c);font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700}
+.ing-note{font-size:12px;color:var(--text-3);margin:8px 2px 0}
+
+.toast{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--accent-lt);color:var(--accent-dk);font-size:13px;font-weight:600;display:none}
+.toast.show{display:block}
+.foot{font-size:11.5px;color:var(--text-3);text-align:center;margin:12px 4px 2px;line-height:1.5}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="demo" id="demo">
+  <div class="app-header"><div class="hb">
+    <div class="header-badge"><span class="live-dot"></span>Live-Demo · 3 von 100 Rezepten</div>
+    <h1>Nährwert-Rechner</h1>
+    <p>Dein Bonus zum Buch: Rezept wählen, Portionen einstellen – Kalorien &amp; Makros sofort sehen.</p>
+  </div></div>
+
+  <div class="mode-tabs" role="tablist">
+    <button class="mode-tab active" type="button" role="tab" aria-selected="true">📖 Meine Rezepte</button>
+    <button class="mode-tab locked" type="button" role="tab" aria-selected="false" id="tabFrei">🔍 Freie Suche<svg class="lock" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></button>
+  </div>
+  <div class="toast" id="toast" role="status">🔒 Im vollen Rechner: freie Suche in über 7.000 Lebensmitteln – eigene Rezepte selbst berechnen.</div>
+
+  <div class="grid">
+    <div class="panel a-list">
+      <div class="panel-title"><span class="ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></span>Rezepte aus dem Buch</div>
+      <div class="rezept-list" id="list"></div>
+    </div>
+
+    <div class="panel a-res" aria-live="polite">
+      <div class="panel-title"><span class="ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span>Nährwerte</div>
+      <div class="rezept-badge" id="badge"></div>
+      <div class="portions">
+        <div class="pl" id="plabel">Wie viele Portionen isst du?<span class="ph" id="phint"></span></div>
+        <div class="stepper">
+          <button class="step" type="button" id="minus" aria-label="Eine Portion weniger">−</button>
+          <div class="pval" id="pval" aria-live="polite">1</div>
+          <button class="step" type="button" id="plus" aria-label="Eine Portion mehr">+</button>
+        </div>
+      </div>
+      <div class="total-kcal">
+        <div class="kcal-number" id="kcal">—</div>
+        <div class="kcal-label" id="klabel">kcal für 1 Portion</div>
+        <div class="per-portion" id="pinfo"></div>
+      </div>
+      <div class="macro-grid">
+        <div class="macro-card m-prot"><span class="macro-value" id="prot">—</span><span class="macro-unit">g</span><div class="macro-name">Protein</div></div>
+        <div class="macro-card m-carb"><span class="macro-value" id="carb">—</span><span class="macro-unit">g</span><div class="macro-name">Kohlenhydrate</div></div>
+        <div class="macro-card m-fat"><span class="macro-value" id="fat">—</span><span class="macro-unit">g</span><div class="macro-name">Fett</div></div>
+        <div class="macro-card m-fib"><span class="macro-value" id="fib">—</span><span class="macro-unit">g</span><div class="macro-name">Ballaststoffe</div></div>
+      </div>
+      <div class="energy-bar" aria-hidden="true">
+        <div class="bar-seg" id="bProt" style="background:var(--prot-c);width:0"></div>
+        <div class="bar-seg" id="bFat" style="background:var(--fat-c);width:0"></div>
+        <div class="bar-seg" id="bCarb" style="background:var(--carb-c);width:0"></div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-dot" style="background:var(--prot-c)"></span>Protein</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--fat-c)"></span>Fett</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--carb-c)"></span>Kohlenhydrate</div>
+      </div>
+    </div>
+
+    <div class="panel a-ing">
+      <div class="panel-title"><span class="ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>Zutaten – automatisch berechnet</div>
+      <div id="ings"></div>
+      <p class="ing-note" id="ingnote"></p>
+    </div>
+  </div>
+
+  <p class="foot">Nährwertdaten: Bundeslebensmittelschlüssel (BLS) 4.0 – Max Rubner-Institut. Richtwerte, berechnet aus den Zutaten des Rezepts.</p>
+</div>
+
+<script>
+// Dados reais da calculadora V10 (mesmos IDs BLS e gramaturas)
+var BLS={
+ C133000:[348,13.22,6.65,53.3,10.98],M114300:[62,3.55,3.49,4.15,0],F110100:[58,0.42,0.5,11.7,2.27],
+ H120100:[721,16.07,70.6,3,4.6],F923900:[63,0.4,0.27,14.07,1.14],K110100:[83,1.94,0.1,17.9,1.42],
+ G480100:[34,1.16,0.15,6.01,1.4],Q120000:[899,0,99.9,0,0],X416243:[4,0.32,0.1,0.54,0],
+ G081100:[29,2.6,0.74,1.54,2.6],G620100:[40,0.84,0.4,6.47,2.9],B309000:[224,3.2,3.1,45,1.1],
+ E111100:[135,13.18,9,0.34,0],Q180000:[900,0,100,0,0],H210400:[538,22.33,46.6,3.87,7]
+};
+var R=[
+ {nr:"01",name:"Cremiges Apfel-Zimt-Porridge",kap:"Frühstück",time:"13 Min.",base:2,u:["Portion","Portionen"],
+  z:[["C133000","Glutenfreie Haferflocken","60 g",60],["M114300","Laktosefreie Milch","300 ml",300],["F110100","Apfel","1 klein",120],["H120100","Walnüsse, gehackt","1 EL",15],["F923900","Apfelmark, ungesüßt","1 EL",15]]},
+ {nr:"75",name:"Kartoffelsalat nach Hausrezept",kap:"Abendbrot",time:"15 Min.",base:2,u:["Portion","Portionen"],
+  z:[["K110100","Kartoffeln, gekocht","400 g",400],["G480100","Zwiebel","1 Stück",80],["Q120000","Olivenöl","3 EL",45],["X416243","Gemüsebrühe","100 ml",100],["G081100","Schnittlauch","10 g",10]]},
+ {nr:"87",name:"Karottenkuchen",kap:"Kaffee & Kuchen",time:"45 Min.",base:12,u:["Stück","Stücke"],
+  z:[["G620100","Karotten, geraspelt","200 g",200],["B309000","Glutenfreie Mehlmischung","200 g",200],["E111100","Eier (Gr. M)","3 Stück",165],["Q180000","Öl","100 ml",92],["H210400","Mandeln, gemahlen","100 g",100]]}
+];
+var r1=function(x){return Math.round(x*10)/10};
+R.forEach(function(r){ // mesma lógica da calculadora: cada ingrediente arredondado a 0,1
+  r.t=[0,0,0,0,0];
+  r.z.forEach(function(z){var b=BLS[z[0]],f=z[3]/100;z.kcal=r1(b[0]*f);for(var i=0;i<5;i++)r.t[i]+=r1(b[i]*f)});
+});
+var de=function(x,d){return x.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d})};
+var cur=0,pp=1,MAXP=4,shown={};
+var $=function(id){return document.getElementById(id)};
+var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function anim(id,to,dec){
+  var el=$(id),from=shown[id]==null?to:shown[id];shown[id]=to;
+  if(reduce||from===to){el.textContent=de(to,dec);return}
+  var t0=performance.now(),D=280;
+  (function step(t){var k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);el.textContent=de(from+(to-from)*e,dec);if(k<1)requestAnimationFrame(step)})(t0);
+}
+
+function renderList(){
+  var h='';
+  R.forEach(function(r,i){
+    var per=Math.round(r.t[0]/r.base);
+    h+='<button type="button" class="rezept-card" aria-pressed="'+(i===cur)+'" data-i="'+i+'">'+
+       '<span class="rnum">'+r.nr+'</span><span class="rbody"><span class="rname">'+r.name+'</span>'+
+       '<span class="rmeta" style="display:block">'+r.kap+' · '+r.time+' · '+(r.base===12?'ca. 12 Stücke':r.base+' Portionen')+'</span></span>'+
+       '<span class="rtag">'+per+' kcal/'+(r.base===12?'Stück':'Port.')+'</span></button>';
+  });
+  h+='<div class="more"><span class="rnum">+97</span>Weitere 97 Rezepte – im Rechner schon fertig berechnet</div>';
+  $('list').innerHTML=h;
+  [].forEach.call(document.querySelectorAll('.rezept-card'),function(b){b.onclick=function(){cur=+b.dataset.i;pp=1;renderList();update()}});
+}
+
+function update(){
+  var r=R[cur],d=r.base/pp,t=r.t;
+  var one=pp===1,unit=one?r.u[0]:r.u[1],isCake=r.base===12;
+  $('badge').textContent='📖 '+r.nr+'. '+r.name;
+  $('plabel').firstChild.nodeValue=isCake?'Wie viele Stücke isst du?':'Wie viele Portionen isst du?';
+  $('phint').textContent='Rezept ergibt '+(isCake?'ca. 12 Stücke':r.base+' Portionen');
+  $('pval').textContent=pp;
+  $('minus').disabled=pp<=1;$('plus').disabled=pp>=MAXP;
+  $('minus').setAttribute('aria-label',isCake?'Ein Stück weniger':'Eine Portion weniger');
+  $('plus').setAttribute('aria-label',isCake?'Ein Stück mehr':'Eine Portion mehr');
+  anim('kcal',Math.round(t[0]/d),0);
+  anim('prot',r1(t[1]/d),1);anim('carb',r1(t[3]/d),1);anim('fat',r1(t[2]/d),1);anim('fib',r1(t[4]/d),1);
+  $('klabel').textContent='kcal für '+pp+' '+unit;
+  var per=Math.round(t[0]/r.base);
+  $('pinfo').textContent=one?'(ganzes Rezept: '+de(Math.round(t[0]),0)+' kcal · '+(isCake?'ca. 12 Stücke':r.base+' Portionen')+')':'('+per+' kcal pro '+r.u[0]+' × '+pp+')';
+  var p=t[1]*4,f=t[2]*9,c=t[3]*4,e=p+f+c;
+  $('bProt').style.width=(p/e*100)+'%';$('bFat').style.width=(f/e*100)+'%';$('bCarb').style.width=(c/e*100)+'%';
+  var h='';
+  r.z.forEach(function(z){h+='<div class="ing-row"><span class="ing-name">'+z[1]+'</span><span class="ing-qty">'+z[2]+'</span><span class="ing-kcal">'+de(Math.round(z.kcal),0)+' kcal</span></div>'});
+  $('ings').innerHTML=h;
+  $('ingnote').textContent='Gesamtes Rezept: '+de(Math.round(t[0]),0)+' kcal. Gewürze wie Salz, Zimt oder Pfeffer fallen kaum ins Gewicht.';
+  sendHeight();
+}
+
+$('minus').onclick=function(){if(pp>1){pp--;update()}};
+$('plus').onclick=function(){if(pp<MAXP){pp++;update()}};
+$('tabFrei').onclick=function(){var t=$('toast');t.classList.add('show');sendHeight();clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('show');sendHeight()},4000)};
+
+// Altura automática para o iframe da página de vendas
+function sendHeight(){try{parent.postMessage({type:'naehrwert-demo-height',height:document.documentElement.scrollHeight},'*')}catch(e){}}
+if(window.ResizeObserver)new ResizeObserver(sendHeight).observe(document.body);
+window.addEventListener('load',sendHeight);
+
+renderList();update();
+</script>
+</body>
+</html>
